@@ -1,0 +1,148 @@
+/* ── Google Fonts — must precede @import "tailwindcss" ── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+@import "tailwindcss";
+
+/* ── Design Tokens ── */
+@theme inline {
+  /* Fonts */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+
+  /* UMOJA Green Scale */
+  --color-umoja-green-50:  #E8F5E9;
+  --color-umoja-green-100: #C8E6C9;
+  --color-umoja-green-200: #A5D6A7;
+  --color-umoja-green-300: #81C784;
+  --color-umoja-green-400: #66BB6A;
+  --color-umoja-green-500: #4CAF50;
+  --color-umoja-green-600: #43A047;
+  --color-umoja-green-700: #2E7D32;
+  --color-umoja-green-800: #1B5E20;
+  --color-umoja-green-900: #0A3D0A;
+  --color-umoja-green-950: #051F05;
+
+  /* UMOJA Gold Scale */
+  --color-umoja-gold-50:  #FFF8E1;
+  --color-umoja-gold-100: #FFECB3;
+  --color-umoja-gold-200: #FFE082;
+  --color-umoja-gold-300: #FFD54F;
+  --color-umoja-gold-400: #FFCA28;
+  --color-umoja-gold-500: #F9A825;
+  --color-umoja-gold-600: #F57F17;
+  --color-umoja-gold-700: #E65100;
+
+  /* Neutrals */
+  --color-umoja-charcoal: #1A1A2E;
+  --color-umoja-navy:     #16213E;
+  --color-umoja-slate:    #263238;
+
+  /* Keyframe animations */
+  --animate-fade-up:    fadeUp 0.6s ease-out forwards;
+  --animate-fade-in:    fadeIn 0.8s ease-out forwards;
+  --animate-float:      float 6s ease-in-out infinite;
+  --animate-glow-pulse: glowPulse 3s ease-in-out infinite;
+  --animate-draw-line:  drawLine 1.5s ease-out forwards;
+}
+
+/* ── Keyframes ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-15px); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(76,175,80,0.15); }
+  50%       { box-shadow: 0 0 40px rgba(76,175,80,0.35); }
+}
+
+@keyframes drawLine {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+@keyframes checkmark {
+  0%   { stroke-dashoffset: 50; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* ── Base Styles ── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: #ffffff;
+    color: #1A1A2E;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+  }
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Custom Utilities ── */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-glow-pulse {
+    animation: glowPulse 3s ease-in-out infinite;
+  }
+
+  .animate-draw-line {
+    animation: drawLine 1.5s ease-out forwards;
+  }
+
+  .section-padding {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+
+  @media (min-width: 768px) {
+    .section-padding {
+      padding-top: 7rem;
+      padding-bottom: 7rem;
+    }
+  }
+}
