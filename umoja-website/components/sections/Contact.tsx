@@ -91,21 +91,15 @@ export default function Contact() {
   const onSubmit: SubmitHandler<ContactFormValues> = async (data) => {
     setSubmitting(true);
     try {
-      const res = await fetch('https://api.web3forms.com/submit', {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_key: process.env.NEXT_PUBLIC_WEB3FORMS_KEY,
-          subject: `New UMOJA-ai inquiry from ${data.full_name}`,
-          from_name: data.full_name,
-          replyto: data.email,
-          ...data,
-        }),
+        body: JSON.stringify(data),
       });
 
-      const result = await res.json();
-      if (!result.success) {
-        throw new Error(result.message ?? CONTACT.errorMessage);
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        throw new Error(body.error ?? CONTACT.errorMessage);
       }
 
       toast.success(CONTACT.successMessage, { duration: 6000 });
