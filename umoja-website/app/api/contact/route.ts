@@ -2,13 +2,11 @@
  * POST /api/contact
  *
  * Receives a contact form submission, validates required fields,
- * and inserts the record into the `contact_submissions` Supabase table
- * using the privileged service-role key (server-side only).
+ * and sends a notification email via Resend.
  */
-import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 
-/* ── Types ── */
 interface ContactPayload {
   full_name: string;
   email: string;
@@ -19,23 +17,9 @@ interface ContactPayload {
   interest_type: string;
 }
 
-/* ── Supabase admin client (never exposed to the browser) ── */
-function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-  if (!url || !serviceKey) {
-    throw new Error('Supabase environment variables are not configured.');
-  }
-
-  return createClient(url, serviceKey, {
-    auth: { persistSession: false },
-  });
-}
-
-/* ── Route handler ── */
 export async function POST(request: Request) {
-  // Parse body
   let body: ContactPayload;
   try {
     body = (await request.json()) as ContactPayload;
@@ -43,7 +27,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
 
-  // Validate required fields
   const { full_name, email, role, interest_type } = body;
   if (!full_name || !email || !role || !interest_type) {
     return NextResponse.json(
@@ -52,33 +35,65 @@ export async function POST(request: Request) {
     );
   }
 
-  // Basic email sanity check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return NextResponse.json({ error: 'Invalid email address.' }, { status: 422 });
   }
 
-  // Insert into Supabase
   try {
-    const supabase = getAdminClient();
+    const { error } = await resend.emails.send({
+      from: 'UMOJA-ai <onboarding@resend.dev>',
+      to: 'akiwumi@icloud.com',
+      replyTo: email.trim().toLowerCase(),
+      subject: `New inquiry from ${full_name.trim()} — ${interest_type.trim()}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a1a;">
+          <h2 style="color: #2d5016; margin-bottom: 24px;">New Contact Form Submission</h2>
 
-    const { error } = await supabase.from('contact_submissions').insert([
-      {
-        full_name: full_name.trim(),
-        email: email.trim().toLowerCase(),
-        organization: body.organization?.trim() ?? null,
-        role: role.trim(),
-        country: body.country?.trim() ?? null,
-        message: body.message?.trim() ?? null,
-        interest_type: interest_type.trim(),
-        submitted_at: new Date().toISOString(),
-      },
-    ]);
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5; font-weight: 600; width: 140px; vertical-align: top;">Name</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5;">${full_name.trim()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5; font-weight: 600; vertical-align: top;">Email</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5;">
+                <a href="mailto:${email.trim().toLowerCase()}" style="color: #2d5016;">${email.trim().toLowerCase()}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5; font-weight: 600; vertical-align: top;">Role</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5;">${role.trim()}</td>
+            </tr>
+            ${body.organization ? `<tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5; font-weight: 600; vertical-align: top;">Organisation</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5;">${body.organization.trim()}</td>
+            </tr>` : ''}
+            ${body.country ? `<tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5; font-weight: 600; vertical-align: top;">Country</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5;">${body.country.trim()}</td>
+            </tr>` : ''}
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5; font-weight: 600; vertical-align: top;">Interest</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e5e5e5;">${interest_type.trim()}</td>
+            </tr>
+            ${body.message ? `<tr>
+              <td style="padding: 10px 0; font-weight: 600; vertical-align: top;">Message</td>
+              <td style="padding: 10px 0; white-space: pre-wrap;">${body.message.trim()}</td>
+            </tr>` : ''}
+          </table>
+
+          <p style="margin-top: 24px; font-size: 13px; color: #888;">
+            You can reply directly to this email to respond to ${full_name.trim()}.
+          </p>
+        </div>
+      `,
+    });
 
     if (error) {
-      console.error('[contact/route] Supabase insert error:', error);
+      console.error('[contact/route] Resend error:', error);
       return NextResponse.json(
-        { error: 'Failed to save your submission. Please try again.' },
+        { error: 'Failed to send your message. Please try again.' },
         { status: 500 },
       );
     }
