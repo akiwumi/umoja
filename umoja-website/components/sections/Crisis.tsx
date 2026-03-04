@@ -48,7 +48,7 @@ export default function Crisis() {
                       target={item.stat}
                       prefix={item.prefix}
                       suffix={item.suffix}
-                      finalLabel={'finalLabel' in item ? item.finalLabel : undefined}
+                      {...('finalLabel' in item ? { finalLabel: item.finalLabel as string } : {})}
                       duration={2.2}
                     />
                   </span>
